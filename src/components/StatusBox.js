@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 //CSS
 const StyledStatusBox = styled.div`
-	.box {color: #797979;font-size: 14px; width:300px; height: auto; padding:15px; border:1px solid #cecece; border-radius:8px;}
+	.box {background:white; color: #797979;font-size: 14px; width:300px; height: auto; padding:15px; border:1px solid #cecece; border-radius:8px;}
 `;
 
 /**
@@ -13,7 +13,7 @@ const StyledStatusBox = styled.div`
  */
 function StatusBox(props) {
 	return (
-		<StyledStatusBox>
+		<StyledStatusBox className={"statusBox " + props.className} >
 			<div className="box">{props.status.msg}</div>
 		</StyledStatusBox>
 	);

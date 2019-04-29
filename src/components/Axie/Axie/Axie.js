@@ -1,12 +1,12 @@
 import React from 'react';
 //own
-import AxieTitle from '../../AxieTitle';
-import AxieParts from '../../AxieParts';
-import AxieStats from '../../AxieStats';
-import AxieSprite from '../../AxieSprite';
-import AxieMoves from '../../AxieMoves';
-import AxieBadges from '../../AxieBadges';
-import AxieSalesData from '../../AxieSalesData';
+import AxieTitle from '../AxieTitle';
+import AxieParts from '../AxieParts';
+import AxieStats from '../AxieStats';
+import AxieSprite from '../AxieSprite';
+import AxieMoves from '../AxieMoves';
+import AxieBadges from '../AxieBadges';
+import SalesData from '../SalesData';
 import BreedingData from '../../Axie/BreedingData';
 //import AxieScores from '../../AxieScores';
 
@@ -48,13 +48,12 @@ class Axie extends React.PureComponent {
   constructor(props){
     super(props);
     //
-    var idleImg = (this.props.data.figure && this.props.data.figure.static) ? this.props.data.figure.static.idle : null;
+    var idleImg = this.props.data.image || "";
     //
     this.state = {
       axieData:         this.props.data,
       axieID:           "axie_"+this.props.data.id,
       img:              this.props.image ? this.props.image : idleImg,
-      axieHasParts:     this.props.data.stage >= 3 ? true : false,
       rendering:        this.props.rendering,
       showControlBoard: false,
     };
@@ -69,7 +68,9 @@ class Axie extends React.PureComponent {
   render(){
     console.log("axie features", this.props.features);
     const axieData = this.state.axieData;
-    const axieHasParts = this.state.axieHasParts;
+    const axieHasParts = axieData.stage >= 3 ? true : false;
+    const axieHasStats = axieData.stats ? true : false;
+    //
     const features = this.props.features;
     const size = this.props.size;
     const background = this.props.background;
@@ -96,8 +97,8 @@ class Axie extends React.PureComponent {
         : ""}
 
         <div className="axieTitleContainer">
-          <AxieTitle id={axieData.id} name={axieData.name} class={axieData.class} stage={axieData.stage} owner={axieData.owner}/>
-          {axieHasParts && features === "stats" ?
+          <AxieTitle id={axieData.id} title={axieData.title} name={axieData.name} class={axieData.class} stage={axieData.stage} owner={axieData.owner}/>
+          {axieHasParts && axieHasStats && features === "stats" ?
             <AxieBadges axieData={axieData} size={"normal"}/>
           : ""}
         </div>
@@ -113,7 +114,7 @@ class Axie extends React.PureComponent {
                 <AxieParts className="axieParts" parts={axieData.parts} />
               : ""}
             </div>
-            {features === "stats" ? 
+            {(axieHasStats && features === "stats") ? 
               <div className="statMoveContainer" style={{display:"block"}}>
                 <div className="statContainer">
                   <AxieStats className="axieStats" stats={axieData.stats} />
@@ -132,7 +133,7 @@ class Axie extends React.PureComponent {
 
         {features === "minimal" ?
           <div className="salesData">
-            {axieData.auction && <AxieSalesData auctionData={axieData.auction}/> } 
+            {axieData.auction && <SalesData auctionData={axieData.auction}/> } 
           </div>
         : ""}
 

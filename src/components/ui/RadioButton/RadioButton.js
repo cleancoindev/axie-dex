@@ -14,9 +14,16 @@ class RadioButton extends React.PureComponent {
 		}));
 	}
 	render() {
+		const color = this.props.color || "#888888";
+		const type = this.props.type;
+		const active = this.props.active;
+		const onChange = this.props.onChange || new Function();
+		const children = this.props.children;
+		const value = this.props.value;
+
 		return (
-			<StyledRadioButton active={this.props.active} className={"radioButton " + (this.props.active ? "active" : "")} onClick={() => {this.props.onChange(this.props.value)}}>
-				{this.props.children}
+			<StyledRadioButton type={type} color={color} active={active} className={"radioButton " + (active ? "active" : "")} onClick={() => {onChange(value)}}>
+				{children}
 			</StyledRadioButton>
 		);
 	}

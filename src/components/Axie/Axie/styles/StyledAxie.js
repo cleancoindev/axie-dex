@@ -13,6 +13,7 @@ export const StyledAxie = styled.div`
   background:white;
   position:relative;
 
+
   .axieTitleContainer {height:60px;}
   .axieContainer {display:flex; flex-flow:column; margin-bottom:5px;}
   .statContainer {display:flex; justify-content: space-between; margin-bottom:10px;}
@@ -58,9 +59,15 @@ export const StyledAxie = styled.div`
 
   /* size */
   ${({ size }) => size === "large" && css`
+    margin:10px;
     width: 280px;
+    border-radius:9px;
     .staticImg {width:280px;}
-    canvas {width:280px; height:auto;}
+    canvas {width:280px!important; height:auto!important;}
+
+    .axieTitle  .name {font-size:16px; margin:0;}
+    .block.left {}
+    .salesData .text {font-size:20px;}
   `}
   ${({ size, features }) => size === "large" && features === "stats" && css`
     width:350px;
@@ -68,12 +75,16 @@ export const StyledAxie = styled.div`
   ${({ size }) => size === "small" && css`
     width:150px;
     padding:10px;
-    min-height:175px;
+    min-height:160px;
+    height:160px;
     .axieTitleContainer {height:20px;}
     .cardController {display:none!important;}
     .axieTitle .name, .axieTitle .id  {font-size:10px;}
     .breedingData {font-size:10px;}
-    .staticImg, .canvas {width:148px; height:auto; margin-left:-10px;}
+    .staticImg, .axieContainer canvas {width:148px!important; height:auto!important; margin-left:-10px;}
+    .salesData {margin-top:-15px;}
+    .salesData .text {font-size:12px;}
+    .nameGroup {display:none;}
   `}
   ${({ size }) => size === "tiny" && css`
     width:80px;
@@ -86,11 +97,13 @@ export const StyledAxie = styled.div`
     .cardController {display:none!important;}
     .axieTitle .name {font-size:10px; margin:0;}
     .axieTitle .icon, .axieTitle .id  {display:none;}
+    .axieTitle .title {display:none;}
 		.breedingData .xpProgress {display:none;}
 		.breedingData * {line-height:100%;}
 		.breedingData .xp {font-size:10px;}
     .axieOwner  {display:none!important;}
-    .staticImg, .canvas {width:78px; height:auto; margin-left:-5px;}
+    .staticImg, canvas {width:78px!important; height:auto!important; margin-left:-5px;}
+    .salesData {display:none!important;}
   `}
 	${({ size, features }) => size === "tiny" && features === "breeding" && css`
 		height: 115px;

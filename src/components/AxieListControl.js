@@ -8,8 +8,10 @@ import RadioGroup from './ui/RadioGroup/RadioGroup';
 
 //CSS
 const StyledAxieListControl = styled.div`
-	.centerControl {display:flex; justify-content:center; align-items:center;}
+
+	.centerControl {display:flex; justify-content:center; align-items:center; margin-bottom:10px;}
 	.centerControl .title {font-size:14px; font-weight:bold; color:#8e8e8e; margin-right:15px;}
+	.centerControl .group { margin-right:20px; display:flex; justify-content:center; align-items:center; }
 	.radioButton {margin-right:5px; font-size:14px;}
 `;
 
@@ -52,31 +54,34 @@ class AxieListControl extends React.PureComponent {
 	}
 
 	render() {
+		const classNames = this.props.className;
 		return (
-				<BasicCenterContainer>
-					<StyledAxieListControl>
+					<StyledAxieListControl className={`${classNames}`}>
 
 					<div className="centerControl">
-						<div className="title">Features</div>
-						<RadioGroup class={"radiogroup"} options={[
-							{label: "Stats", value: "stats"},
-							{label: "Parts", value: "parts"},
-							{label: "Minimal", value: "minimal"},
-						]} active_option={"minimal"} onChange={this.onOptionChange}>
-						</RadioGroup>
 
-						<div className="title">Size</div>
-							<RadioGroup class={"radiogroup"} options={[
-								{label: "Normal", value: "normal"},
-								{label: "Large", value: "large"},
-							]} active_option={"normal"} onChange={this.onSizeChange}>
+						<div className="group">
+							<RadioGroup label="Features" type="modern" color="#a146ef" class={"radiogroup"} options={[
+								{label: "Stats", value: "stats"},
+								{label: "Parts", value: "parts"},
+								{label: "Minimal", value: "minimal"},
+							]} active_option={"minimal"} onChange={this.onOptionChange}>
 							</RadioGroup>
+						</div>
+						<div className="group">
+								<RadioGroup label="Size" type="modern" color="#a146ef" class={"radiogroup"} options={[
+									{label: "Normal", value: "normal"},
+									{label: "Large", value: "large"},
+									{label: "Small", value: "small"},
+									{label: "Tiny", value: "tiny"},
+								]} active_option={"normal"} onChange={this.onSizeChange}>
+								</RadioGroup>
+							</div>
 						</div>
 
 
 						<AxieList axies={this.props.axies} features={this.state.features} size={this.state.size}/>
 					</StyledAxieListControl>
-				</BasicCenterContainer>
 		);
 	}
 }

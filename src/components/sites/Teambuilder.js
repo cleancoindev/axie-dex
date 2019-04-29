@@ -19,20 +19,21 @@ import BasicCenterContainer from "../containers/BasicCenterContainer";
 import {AXIE_DATA, AXIE_DATA_V1} from "../../services/axie-data-service.js";
 import {AXIE_PIXI} from "../../services/axie-pixi-service";
 //import AxieTitle from "../AxieTitle";
-import AxieBadges from "../AxieBadges";
+import AxieBadges from "../Axie/AxieBadges";
 //import AxieScores from "../AxieScores";
 //import AxieParts from "../AxieParts";
 import AxieComponent from "../Axie/Axie/Axie";
 import Button from "../ui/Button";
 import IconButton from "../ui/IconButton";
 import Textfield from "../ui/Textfield";
-import AxieTeams from '../AxieTeams';
-import AxiePartList from '../AxiePartList';
+import AxieTeams from '../TeamBuilder/AxieTeams';
+import AxiePartList from '../TeamBuilder/AxiePartList';
 //import AxiePartClasses from '../AxiePartClasses';
 // classes
 import {Grid} from "../classes/Grid";
 import {Axie} from "../classes/Axie";
 import AxiePartClass from "../classes/AxiePart"
+import { AxieV2 } from '../../services/axie-data-service2';
 
 //CSS
 const StyledTeamBuilder = styled.div`
@@ -41,7 +42,7 @@ const StyledTeamBuilder = styled.div`
 	/* component */
 	margin-top:20px;
 	canvas { width:100%; height:100%;}
-	h2 {margin-bottom:15px; font-size:32px; color:#444;}
+	h1 {margin-top:0;}
 	h3 { color: grey; font-weight: normal; font-size: 18px; margin-bottom: 10px;}
 	.titlebar {display:flex; justify-content:center;}
 	.buttonbar {display:flex; margin-bottom:10px;}
@@ -78,8 +79,8 @@ const StyledTeamBuilder = styled.div`
 	/* close btn */
 	.closeButton {position:relative; top: 40px; left:200px; z-index:10;}
 	/* filtering */
-	.filterBar {display:inline-flex; border: 1px solid #e8e8e8; margin-bottom:10px; border-radius:8px; background:white;}
-	.filterGroup {display:flex; position:relative;  border-right: 1px solid #e8e8e8; /*margin-right:10px;*/ padding:10px 15px;   }
+	.filterBar {display:inline-flex; border: 1px solid #e8e8e8; border-bottom:0; border-radius:8px 8px 0 0; background:white;}
+	.filterGroup {display:flex; position:relative;  border-right: 1px solid #e8e8e8; align-items:center; /*margin-right:10px;*/ padding:10px 15px;   }
 	.filterGroup:last-child {border:none; margin:0; }
 	.filterGroup > div { margin-right:5px;}
 	.filterGroup .btx {cursor: pointer; display: flex; align-items: center; font-size: 12px; color: #a146ef; margin: 0 5px; padding: 0 10px; border-radius: 50px;}
@@ -88,6 +89,30 @@ const StyledTeamBuilder = styled.div`
 	.axiePartList {	position: absolute; top:55px; right:0; }
 	.toggleAllPartsButton {width:100px;}
 	.partList .part {user-select:none; cursor:pointer;}
+`;
+
+const StyledBoard = styled.div`
+    position: absolute;
+    background: white;
+    top: 60px;
+    left: 0;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #00000042;
+    font-size: 14px;
+    height: 200px;
+		width:360px;
+    z-index: 10;
+    overflow-y: scroll;
+`;
+const StyledRow = styled.div`
+	cursor: pointer;
+	padding:0 10px;
+	color:#999999;
+
+	&:hover {
+		color:black;
+	}
 `;
 
 // class
@@ -143,6 +168,7 @@ class Teambuilder extends React.PureComponent {
 			selectedAxie: null,
 			showAddressUI: false,
 			showAllParts: false,
+			showAnimationPanel: false,
 			// loading
 			is_loading: false,
 			loading_complete: false,
@@ -247,20 +273,35 @@ class Teambuilder extends React.PureComponent {
 	}
 	getAllAxies = () => {
 		this.setState({
-			loading_status: "Loading Images",
+			loading_status: "Loading Axies",
 			is_loading: true,
-		}, ()=>{
-			AXIE_DATA.getAllAxiesByAddress(this.state.address).then((axies)=>{
-				//console.log("many axies", axies);
+		}, async ()=>{
+
+			var axx = await AxieV2.getAllAxiesByAddress(this.state.address, {});
+			console.log("axxx", axx);
+
+			//filter out axies without figures
+			var axx2 = axx.filter(axie => 
+				axie.figure && axie.figure.images["axie.png"]
+			);
+			console.log("axxxx2", axx2);
+
+			this.setState({
+				axies : axx,
+			}, this.loadAxieSpines);
+
+			/*AXIE_DATA.getAllAxiesByAddress(this.state.address).then((axies)=>{
+				console.log("many axies", axies);
 				this.setState({
 					axies : axies,
 				}, this.loadStaticAxieImages);
-			});
+			});*/
 		});
 	}
 	loadStaticAxieImages(){
 		AXIE_DATA_V1.getStaticImagesByAxies(this.state.axies, (axie)=>{
-			//console.log(axie.id);
+
+			console.log("bb", axie.id);
 			this.setState((prevState) => ({
 				numStaticImagesLoaded: prevState.numStaticImagesLoaded + 1,
 				loading_status: "Loading Images " + this.state.numStaticImagesLoaded + " / " + this.state.axies.length,
@@ -274,12 +315,12 @@ class Teambuilder extends React.PureComponent {
 	}
 	loadAxieSpines(){
 		AXIE_PIXI.getSpinesOfAxies(this.state.axies, (axie) =>{
-			//console.log(axie);
 			this.setState((prevState) => ({
 				numSpinesLoaded: prevState.numSpinesLoaded + 1,
 				loading_status: "Loading Spine Data " + this.state.numSpinesLoaded + " / " + this.state.axies.length,
 			}));
 		}).then((axieSpines)=>{
+			console.log("spinoo", axieSpines);
 			this.setState({
 				axie_spines: axieSpines,
 				loading_status: "Complete",
@@ -293,7 +334,7 @@ class Teambuilder extends React.PureComponent {
 		for(let i = 0; i < this.state.axies.length; i++){
 			var newAxie = new Axie(this.state.axies[i], this.state.axie_spines[i]);
 			newAxie.ratings = calcBadges(this.state.axies[i]);
-			newAxie.image = this.state.static_axie_images[i];
+			newAxie.image = this.state.axies[i].image;
 			axiesWithSpine.push(newAxie);
 		}
 		var newAxieGroups = Object.assign(this.state.axie_groups, {"all": axiesWithSpine});
@@ -341,6 +382,7 @@ class Teambuilder extends React.PureComponent {
 		let grid = new Grid(num_rows, num_cols);
 		// fill axies into {2d grid}
 		grid.insertElems(this.state.axies_with_spine);
+		console.log("axies w/spine", this.state.axies_with_spine);
 		// render axies in a grid
 		for(let i = 0; i < grid.rows; i++){
 			for(let j = 0; j < grid.cols; j++){
@@ -362,6 +404,7 @@ class Teambuilder extends React.PureComponent {
 	 * @param {Number} y
 	 */
 	renderAxie(axie, x, y){
+		//console.log("sss", axie);
 		if(!axie.spineData) return; // needs spine to be rendered
 		var CRISP = this.state.CRISP_MULTIPLIER;
 		var ZOOM = this.state.ZOOM;
@@ -384,10 +427,11 @@ class Teambuilder extends React.PureComponent {
 			(y * gapY + startY) * CRISP,
 		);
 		// set animation
-		//axie.spineData.state.setAnimation(0, "walking", true);
+		//axie.spineData.state.setAnimation(0, "action/evolve", true);
 		//
 		// add child
 		this.axieContainer.addChild(axie.spineData);
+		console.log("spinn", axie);
 		// check disabled
 		if(axie.otherData.disabled) {
 			axie.spineData.alpha = 0.2;
@@ -559,6 +603,14 @@ class Teambuilder extends React.PureComponent {
 		}
 	}
 
+	handleClickAnimationName = (animationName) => {
+		console.log("anim", animationName);
+		this.state.axies_with_spine.forEach(axie => {
+			console.log("aaaa", axie);
+			axie.spineData.state.setAnimation(0, animationName, true);
+		})
+	}
+
 
 	areAxiesLoaded = () => {
 		var axies = this.state.axie_groups['all'];
@@ -693,6 +745,11 @@ class Teambuilder extends React.PureComponent {
 			showAllParts: !prevState.showAllParts,
 		}));
 	}
+	toggleAnimationPanel = () => {
+		this.setState((prevState) => ({
+			showAnimationPanel: !prevState.showAnimationPanel,
+		}));
+	}
 	closeSelectedAxie = () => {
 		this.setState({
 			selectedAxie: null
@@ -789,10 +846,11 @@ class Teambuilder extends React.PureComponent {
 			 this.state.ZOOM > 0.8 &&
 			 this.state.loading_complete && 
 			 !this.state.hide_UI){
-			axie_overlays = this.state.axies_with_spine.map((axie) => { 
+			axie_overlays = this.state.axies_with_spine.map((axie, i) => { 
+				//console.log("cc", axie);
 				var nowPrice;
 				var endPrice;
-				if(axie.axieData.auction !== null){
+				if(axie.axieData.auction != null){
 					var nowPrice = web3.utils.fromWei(axie.axieData.auction.buyNowPrice, 'ether');
 					var endPrice = web3.utils.fromWei(axie.axieData.auction.endingPrice, 'ether');
 					var msg;
@@ -807,7 +865,7 @@ class Teambuilder extends React.PureComponent {
 					return (axie.spineData) ? 
 					<div 
 					className="overlayUI" 
-					key={axie.axieData.id} 
+					key={i} 
 					style={{ 
 						left:this.getPositionOfAxie(axie.spineData, "top_left").x - 35*this.state.ZOOM + "px", 
 						top: this.getPositionOfAxie(axie.spineData, "top_left").y - 50*this.state.ZOOM + "px"
@@ -862,11 +920,11 @@ class Teambuilder extends React.PureComponent {
 				<BasicCenterContainer>
 					{/* TitleBar */}
 					<div className="titlebar">
-						<h2>Axie Team Builder</h2>
-						<h2 className="count">
+						<h1>Axie Team Builder 						<span className="count">
 							{this.state.axies_with_spine ? this.state.axies_with_spine.length : 0} 
 							{this.state.axie_groups["all"] ? " / " + this.state.axie_groups["all"].length : ""} 
-						</h2>
+						</span></h1>
+
 						
 						<div className="addressContainer">
 								<Button name="Toggle Address" onClick={this.toggleAddress}/>
@@ -888,33 +946,50 @@ class Teambuilder extends React.PureComponent {
 					{/* FilterBar */}
 					<div className="filterBar">
 						<div className="filterGroup">
-							<Button name={"Reset"} onClick={this.showAllAxies} />
+							<Button type="outline" name={"Reset"} onClick={this.showAllAxies} />
 						</div>
 						<div className="filterGroup">
-						<ReactTooltip id={"tb_attack_level_1"} type='dark' effect='solid' place="top">ATK Level 1</ReactTooltip>
-						<ReactTooltip id={"tb_attack_level_2"} type='dark' effect='solid' place="top">ATK Level 2</ReactTooltip>
-						<ReactTooltip id={"tb_attack_level_3"} type='dark' effect='solid' place="top">ATK Level 3</ReactTooltip>
-						<ReactTooltip id={"sale_filter"} type='dark' effect='solid' place="top">Sale filter</ReactTooltip>
+							<Button type="outline" name={"Animations"} onClick={this.toggleAnimationPanel} />
+							{this.state.showAnimationPanel &&
+								<StyledBoard>
+									{this.state.axies_with_spine && 
+									this.state.axies_with_spine[0].spineData.spineData.animations.map(animation => 
+										<StyledRow onClick={() => {this.handleClickAnimationName(animation.name)}}>{animation.name}</StyledRow>
+									)}
+								</StyledBoard>
+							}
+						</div>
+						<div className="filterGroup">
+							<ReactTooltip id={"sale_filter"} type='dark' effect='solid' place="top">Sale filter</ReactTooltip>
+							<div data-tip data-for={"sale_filter"}>
+								<IconButton color={"#4e4e4e"} icon={"./img/icons/money.svg"} onClick={() => this.showAxiesByPricing()} />
+							</div>
+						</div>
 
+						<div className="filterGroup">
+							<ReactTooltip id={"tb_attack_level_1"} type='dark' effect='solid' place="top">ATK Level 1</ReactTooltip>
+							<ReactTooltip id={"tb_attack_level_2"} type='dark' effect='solid' place="top">ATK Level 2</ReactTooltip>
+							<ReactTooltip id={"tb_attack_level_3"} type='dark' effect='solid' place="top">ATK Level 3</ReactTooltip>
+							<ReactTooltip id={"tb_attack_level_4"} type='dark' effect='solid' place="top">ATK Level 4</ReactTooltip>
 
 							<div data-tip data-for={"tb_attack_level_1"}> 
 								<IconButton active="true" color={"#4e4e4e"} icon={"./img/icons/statLevels/attack_level_1.svg"} onClick={() => this.showAxiesByRating("attack", 1)}/> 
 							</div>
-
 							<div data-tip data-for={"tb_attack_level_2"}> 
 								<IconButton color={"#4e4e4e"} icon={"./img/icons/statLevels/attack_level_2.svg"} onClick={() => this.showAxiesByRating("attack", 2)} />
 							</div>
 							<div data-tip data-for={"tb_attack_level_3"}>
 								<IconButton color={"#4e4e4e"} icon={"./img/icons/statLevels/attack_level_3.svg"} onClick={() => this.showAxiesByRating("attack", 3)} />
 							</div>
-							<div data-tip data-for={"sale_filter"}>
-								<IconButton color={"#4e4e4e"} icon={"./img/icons/statLevels/attack_level_3.svg"} onClick={() => this.showAxiesByPricing()} />
+							<div data-tip data-for={"tb_attack_level_4"}>
+								<IconButton color={"#d62323"} icon={"./img/icons/statLevels/attack_level_3.svg"} onClick={() => this.showAxiesByRating("attack", 4)} />
 							</div>
 						</div>
 						<div className="filterGroup">
 							<ReactTooltip id={"tb_tank_level_1"} type='dark' effect='solid' place="top">TNK Level 1</ReactTooltip>
 							<ReactTooltip id={"tb_tank_level_2"} type='dark' effect='solid' place="top">TNK Level 2</ReactTooltip>
 							<ReactTooltip id={"tb_tank_level_3"} type='dark' effect='solid' place="top">TNK Level 3</ReactTooltip>
+							<ReactTooltip id={"tb_tank_level_4"} type='dark' effect='solid' place="top">TNK Level 4</ReactTooltip>
 							<div data-tip data-for={"tb_tank_level_1"}>
 								<IconButton color={"#4e4e4e"} icon={"./img/icons/statLevels/defense_level_1.svg"} onClick={() => this.showAxiesByRating("tankiness", 1)} />
 							</div>
@@ -923,6 +998,9 @@ class Teambuilder extends React.PureComponent {
 							</div>
 							<div data-tip data-for={"tb_tank_level_3"}>
 								<IconButton color={"#4e4e4e"} icon={"./img/icons/statLevels/defense_level_3.svg"} onClick={() => this.showAxiesByRating("tankiness", 3)} />
+							</div>
+							<div data-tip data-for={"tb_tank_level_4"}>
+								<IconButton color={"#d62323"} icon={"./img/icons/statLevels/defense_level_3.svg"} onClick={() => this.showAxiesByRating("tankiness", 4)} />
 							</div>
 						</div>
 						<div className="filterGroup">

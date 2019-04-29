@@ -2,6 +2,8 @@
 //axios
 import axios from 'axios';
 import { ExpSyncContract } from '../data/contracts/ExpSyncContract';
+import Web3 from "web3";
+import { consolidateStreamedStyles } from 'styled-components';
 
 /*
     A list of API URL generators for the Axie Infinity Website
@@ -41,8 +43,9 @@ export const AXIE_DATA = {
     getAllAxiesByAddress(address){
         return AXIE_DATA.getAxiesByAddress(address).then((data)=>{
             //var totalAxies = data.totalAxies;
-            var totalPages = data.totalPages;
-            var axiesPerPage = 12;
+            var totalAxies = data.totalAxies;
+            var axiesPerPage = data.axies.length;
+            var totalPages = Math.floor(totalAxies / axiesPerPage);
             var axies_cache = [];
             //
             var promises = [];
@@ -146,10 +149,12 @@ export const AXIE_DATA_V1 = {
      */
     getAllAxiesByAddress(address, additionalParams, callback){
         return AXIE_DATA.getAxiesByAddress(address, 0, additionalParams).then((data)=>{
-            //var totalAxies = data.totalAxies;
-            var totalPages = data.totalPages;
-            var axiesPerPage = 12;
+            //console.log("d", data);
+            var totalAxies = data.totalAxies;
+            var axiesPerPage = data.axies.length;
+            var totalPages = Math.floor(totalAxies/axiesPerPage);
             var axies_cache = [];
+            if(callback) callback({loaded: 0, total: totalPages * axiesPerPage});
             //
             var promises = [];
             for(let i = 0; i < totalPages; i++){
@@ -203,6 +208,7 @@ export const AXIE_DATA_V1 = {
             var p = new Promise((resolve, reject)=>{
                 this.getAxieById(axie.id).then((data) => {
                     var staticImage = data.figure ? data.figure.static.idle : ""; 
+                    console.log("eee", staticImage);
                     resolve(staticImage);
                     onDataCallback(axie);
                 });
@@ -228,29 +234,65 @@ export const AXIE_DATA_V1 = {
             return data.data;
         })
     },
+    getTeamsByAddress(address){
+        if(!address) throw new Error("address required");
+        const url = `https://api.axieinfinity.com/v1/battle/teams/?address=${address}&offset=0&count=9999&no_limit=1`;
+        return axios.get(url).then(data=>{
+            return data.data;
+        });
+    },
+    getTeamById(teamID){
+        if(!teamID) throw new Error("teamID required");
+        const url = `https://api.axieinfinity.com/v1/battle/teams/${teamID}`;
+        return axios.get(url).then(data=>{
+            return data.data;
+        })
+    },
 }
+
+
+
+export const AXIE_DATA_V2 = {
+
+	getAxiesByAddress(address, offset, additionalParams){
+        let url = "https://axieinfinity.com/api/v2/addresses/";
+        let web3 = new Web3(Web3.givenProvider)
+        if(!web3.utils.isAddress(address)) throw new Error("invalid Ethereum address");
+        url = `${url}${address}/axies?a=1`;
+        if(offset) url += `&offset=${offset}`;
+        if(additionalParams) url += `&${additionalParams}`;
+        console.log(url);
+        return axios.get(url).then(data => {
+            return data.data;
+            console.log("data", data);
+        }).catch(error => console.log("err", error));
+	}
+}
+
 
 
 export const AXIE_DATA_TRANSFORM = {
 
-    mergeXPDataIntoV1API(axies_v1, axies_v0){
-        axies_v1.forEach(axie_v1 => {
+    mergeXPDataIntoV2API(axies_v2, axies_v0){
+        axies_v2.forEach(axie_v2 => {
             axies_v0.forEach(axie_v0 => {
-                if(axie_v1.id == axie_v0.id) {
-                    axie_v1["exp"]            = axie_v0.exp
-                    axie_v1["expForBreeding"] = axie_v0.expForBreeding
+                if(axie_v2.id == axie_v0.id) {
+                    console.log("vvv", axie_v2, axie_v0);
+                    axie_v2["exp"]            = axie_v0.exp
+                    axie_v2["expForBreeding"] = axie_v0.expForBreeding
                 }
             })
         });
     },
 
-    getAndMergePendingBlockchainXPIntoV1API(axies_v1, ExpSyncContract){
+    getAndMergePendingBlockchainXPIntoV2API(axies_v2, ExpSyncContract){
         var promises = [];
-        axies_v1.forEach(axie=>{
+        axies_v2.forEach(axie=>{
             var p = new Promise((resolve,reject)=>{
+                console.log("kkkK", axie);
                 ExpSyncContract.methods.getCheckpoint(axie.id.toString()).call((err, res)=>{
                     console.log("XP", res);
-                    axie["pendingExp2"] = res._exp || 0;
+                    axie["pendingExp2"] = (res && res._exp) ? res._exp : 0;
                     resolve();
                 });
             })
@@ -259,4 +301,15 @@ export const AXIE_DATA_TRANSFORM = {
         return Promise.all(promises);
     }
     
+}
+
+
+export const AXIE_ICU = {
+
+    getAxies(params){
+        const url = `https://axie.icu/api/search?${params}`;
+        return axios.get(url).then(data=>{
+            return data.data;
+        })
+    }
 }
